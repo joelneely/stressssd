@@ -18,15 +18,30 @@ Build a Go command-line utility to help keep external SSDs healthy in a macOS en
 
 ### Completed: Step 3 — Add index column and header row
 
-The program (`main.go`) prints a columnar summary of all currently mounted external physical disks to stdout. Example output:
+### Completed: Step 4 — Interactive disk selection and confirmation
+
+The program (`main.go`) prints a columnar summary of all currently mounted external physical disks, then interacts with the user:
 
 ```
  #  Disk      Size        SMART Status
  1  disk4     2.0 GB      Not Supported
  2  disk6     4.0 TB      Not Supported
+
+Enter line number to exercise (1-2), or 0 to quit: 2
+
+Selected: disk6 (4.0 TB)
+WARNING: All files on this disk must be closed before proceeding.
+Ready to proceed? (yes/y to continue, no/n to quit): y
+Preparing to fully read disk disk6...
 ```
 
-Columns: sequential index, disk identifier, total size (decimal GB/TB), SMART status string. The index only increments for successfully retrieved disks.
+If no external drives are detected, the program prints "No external physical drives found." and exits.
+
+Input validation:
+- Selection: non-integers and out-of-range values prompt a retry; 0 quits
+- Confirmation: only yes/y/no/n accepted; anything else prompts a retry; no/n quits
+
+The disk read itself is not yet implemented; the "Preparing to fully read..." message is a placeholder.
 
 `Not Supported` for SMART status is typical for disks connected via USB adapters that don't pass SMART commands through.
 
@@ -66,7 +81,14 @@ type diskutilInfo struct {
     SMARTStatus string `plist:"SMARTStatus"`
     TotalSize   uint64 `plist:"TotalSize"`
 }
+
+type diskEntry struct {
+    name string
+    info diskutilInfo
+}
 ```
+
+`diskEntry` collects results before printing so that user selections can be looked up by index after the list is displayed.
 
 ### Size formatting
 
@@ -99,9 +121,6 @@ stressssd/
 - **stderr for errors, stdout for results**: Clean separation so output can be piped or processed by other tools. Per-disk info errors are non-fatal; processing continues to the next disk.
 - **Decimal sizes**: `diskutil` reports sizes in decimal (1 GB = 1,000,000,000 bytes), so the formatter uses the same convention.
 
-## Next Steps (not yet defined)
+## Next Steps
 
-The broader goal is SSD health monitoring and data-loss prevention. Potential next steps include:
-- Monitoring for unexpected unmounts or I/O errors
-- Periodic health checks or alerting
-- Filesystem health checks
+- Implement the full sequential read of the selected disk (the core SSD exercise feature)
