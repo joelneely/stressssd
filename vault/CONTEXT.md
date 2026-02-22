@@ -16,14 +16,17 @@ Build a Go command-line utility to help keep external SSDs healthy in a macOS en
 
 ### Completed: Step 2 — Add SMART status and disk size
 
+### Completed: Step 3 — Add index column and header row
+
 The program (`main.go`) prints a columnar summary of all currently mounted external physical disks to stdout. Example output:
 
 ```
-disk4     2.0 GB      Not Supported
-disk6     4.0 TB      Not Supported
+ #  Disk      Size        SMART Status
+ 1  disk4     2.0 GB      Not Supported
+ 2  disk6     4.0 TB      Not Supported
 ```
 
-Columns: disk identifier, total size (decimal GB/TB), SMART status string.
+Columns: sequential index, disk identifier, total size (decimal GB/TB), SMART status string. The index only increments for successfully retrieved disks.
 
 `Not Supported` for SMART status is typical for disks connected via USB adapters that don't pass SMART commands through.
 
