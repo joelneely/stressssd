@@ -12,6 +12,35 @@ type diskutilList struct {
 	WholeDisks []string `plist:"WholeDisks"`
 }
 
+type diskutilInfo struct {
+	SMARTStatus string `plist:"SMARTStatus"`
+	TotalSize   uint64 `plist:"TotalSize"`
+}
+
+func getDiskInfo(disk string) (diskutilInfo, error) {
+	cmd := exec.Command("diskutil", "info", "-plist", "/dev/"+disk)
+	output, err := cmd.Output()
+	if err != nil {
+		return diskutilInfo{}, err
+	}
+	var info diskutilInfo
+	if _, err = plist.Unmarshal(output, &info); err != nil {
+		return diskutilInfo{}, err
+	}
+	return info, nil
+}
+
+func formatSize(bytes uint64) string {
+	const (
+		GB = 1_000_000_000
+		TB = 1_000_000_000_000
+	)
+	if bytes >= TB {
+		return fmt.Sprintf("%.1f TB", float64(bytes)/TB)
+	}
+	return fmt.Sprintf("%.1f GB", float64(bytes)/GB)
+}
+
 func main() {
 	cmd := exec.Command("diskutil", "list", "-plist", "external", "physical")
 	output, err := cmd.Output()
@@ -27,6 +56,11 @@ func main() {
 	}
 
 	for _, disk := range list.WholeDisks {
-		fmt.Println(disk)
+		info, err := getDiskInfo(disk)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error getting info for %s: %v\n", disk, err)
+			continue
+		}
+		fmt.Printf("%-8s  %-10s  %s\n", disk, formatSize(info.TotalSize), info.SMARTStatus)
 	}
 }
