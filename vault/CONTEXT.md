@@ -22,6 +22,8 @@ Build a Go command-line utility to help keep external SSDs healthy in a macOS en
 
 ### Completed: Step 5 — Full disk read with sudo escalation and remount guarantee
 
+### Completed: Step 6 — Elapsed time for read and total run time
+
 The program is now fully functional. Example session:
 
 ```
@@ -39,9 +41,10 @@ Unmounting disk6...
 Unmount of all volumes on disk6 was successful
 Reading disk...
   100.0%  4.0 TB / 4.0 TB
-Read complete.
+Read complete. (1h 12m 33s)
 Remounting disk6...
-Volume(s) on disk6 failed to mount or are not currently mountable.
+Volume(s) mounted successfully
+Total run time: 1h 13m 45s
 ```
 
 If no external drives are detected, the program prints "No external physical drives found." and exits.
@@ -141,6 +144,7 @@ stressssd/
 - **`/dev/rdiskN` over `/dev/diskN`**: Raw character device bypasses the buffer cache, giving much faster sequential reads.
 - **Inline read loop over `dd`/`cat`**: Allows live progress display without external dependencies.
 - **`sync.Once` for remount**: Ensures remount runs exactly once regardless of exit path (normal, error, or signal).
+- **Timing**: `programStart` recorded at the top of `main()`; `readStart` recorded just before the read loop. Read elapsed time appended to "Read complete."; total run time printed after successful remount. Duration formatted as `Xh Ym Zs`, `Ym Zs`, or `Zs` as appropriate.
 - **`syscall.Exec` for sudo re-exec**: Replaces the current process entirely rather than spawning a child, so the elevated process owns the terminal cleanly.
 
 ## Next Steps
