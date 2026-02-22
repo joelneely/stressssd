@@ -55,12 +55,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Printf("%2s  %-8s  %-10s  %s\n", "#", "Disk", "Size", "SMART Status")
+	n := 0
 	for _, disk := range list.WholeDisks {
 		info, err := getDiskInfo(disk)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error getting info for %s: %v\n", disk, err)
 			continue
 		}
-		fmt.Printf("%-8s  %-10s  %s\n", disk, formatSize(info.TotalSize), info.SMARTStatus)
+		n++
+		fmt.Printf("%2d  %-8s  %-10s  %s\n", n, disk, formatSize(info.TotalSize), info.SMARTStatus)
 	}
 }
