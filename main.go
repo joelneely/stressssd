@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"howett.net/plist"
 )
@@ -53,7 +54,21 @@ func formatSize(bytes uint64) string {
 	return fmt.Sprintf("%.1f GB", float64(bytes)/GB)
 }
 
-func readDisk(name string, totalBytes uint64) error {
+func formatDuration(d time.Duration) string {
+	d = d.Round(time.Second)
+	h := int(d.Hours())
+	m := int(d.Minutes()) % 60
+	s := int(d.Seconds()) % 60
+	if h > 0 {
+		return fmt.Sprintf("%dh %dm %ds", h, m, s)
+	}
+	if m > 0 {
+		return fmt.Sprintf("%dm %ds", m, s)
+	}
+	return fmt.Sprintf("%ds", s)
+}
+
+func readDisk(name string, totalBytes uint64, programStart time.Time) error {
 	// Unmount the disk to prevent concurrent filesystem access during the read.
 	fmt.Printf("Unmounting %s...\n", name)
 	out, err := exec.Command("diskutil", "unmountDisk", "/dev/"+name).CombinedOutput()
@@ -72,6 +87,7 @@ func readDisk(name string, totalBytes uint64) error {
 				fmt.Fprintf(os.Stderr, "warning: remount failed: %v: %s\n", err, strings.TrimSpace(string(out)))
 			} else {
 				fmt.Println(strings.TrimSpace(string(out)))
+				fmt.Printf("Total run time: %s\n", formatDuration(time.Since(programStart)))
 			}
 		})
 	}
@@ -100,6 +116,7 @@ func readDisk(name string, totalBytes uint64) error {
 	buf := make([]byte, bufSize)
 	var bytesRead uint64
 
+	readStart := time.Now()
 	fmt.Println("Reading disk...")
 	for {
 		n, err := f.Read(buf)
@@ -117,11 +134,13 @@ func readDisk(name string, totalBytes uint64) error {
 		}
 	}
 	fmt.Println()
-	fmt.Println("Read complete.")
+	fmt.Printf("Read complete. (%s)\n", formatDuration(time.Since(readStart)))
 	return nil
 }
 
 func main() {
+	programStart := time.Now()
+
 	if os.Getuid() != 0 {
 		exe, err := os.Executable()
 		if err != nil {
@@ -204,7 +223,7 @@ func main() {
 		switch strings.TrimSpace(strings.ToLower(line)) {
 		case "yes", "y":
 			fmt.Printf("Preparing to fully read disk %s...\n", chosen.name)
-			if err := readDisk(chosen.name, chosen.info.TotalSize); err != nil {
+			if err := readDisk(chosen.name, chosen.info.TotalSize, programStart); err != nil {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
 				os.Exit(1)
 			}
