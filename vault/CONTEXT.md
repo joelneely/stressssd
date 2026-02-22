@@ -122,6 +122,7 @@ stressssd/
   main.go       — entry point; all logic currently lives here
   go.mod        — module: stressssd, go 1.23
   go.sum        — dependency checksums
+  .gitignore    — excludes compiled binary (stressssd)
   CLAUDE.md     — guidance for Claude Code
   README.md     — project overview and build instructions
   vault/
