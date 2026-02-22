@@ -2,11 +2,11 @@
 
 A macOS command-line utility to help keep external SSDs healthy and prevent data loss. The name is intentional.
 
-> **Work in progress.** As of February 2026, this tool is in early development. The disk read feature is not yet implemented.
-
 ## Current behavior
 
-When run, `stressssd` lists all external physical disks currently connected to the Mac, then prompts the user to select one for exercising:
+`stressssd` lists all external physical disks connected to the Mac, prompts the user to select one, then fully reads the selected disk to exercise it and surface any latent errors.
+
+Example session:
 
 ```
  #  Disk      Size        SMART Status
@@ -17,7 +17,12 @@ Enter line number to exercise (1-2), or 0 to quit: 2
 
 Selected: disk6 (4.0 TB)
 WARNING: All files on this disk must be closed before proceeding.
-Ready to proceed? (yes/y to continue, no/n to quit):
+Ready to proceed? (yes/y to continue, no/n to quit): y
+Preparing to fully read disk disk6...
+Unmounting disk6...
+Unmount of all volumes on disk6 was successful
+Reading disk...
+   42.7%  1.7 TB / 4.0 TB
 ```
 
 If no external drives are detected, the program prints a message and exits.
@@ -42,6 +47,4 @@ Or without building:
 go run .
 ```
 
-## Planned direction
-
-The tool will be enhanced to fully read a selected drive, helping to minimize the risk of data loss from SSD failure.
+The program requires root access to read raw disk devices. If not run as root, it will automatically re-execute itself via `sudo` and prompt for a password.

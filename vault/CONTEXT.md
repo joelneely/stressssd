@@ -20,7 +20,9 @@ Build a Go command-line utility to help keep external SSDs healthy in a macOS en
 
 ### Completed: Step 4 — Interactive disk selection and confirmation
 
-The program (`main.go`) prints a columnar summary of all currently mounted external physical disks, then interacts with the user:
+### Completed: Step 5 — Full disk read with sudo escalation and remount guarantee
+
+The program is now fully functional. Example session:
 
 ```
  #  Disk      Size        SMART Status
@@ -33,6 +35,13 @@ Selected: disk6 (4.0 TB)
 WARNING: All files on this disk must be closed before proceeding.
 Ready to proceed? (yes/y to continue, no/n to quit): y
 Preparing to fully read disk disk6...
+Unmounting disk6...
+Unmount of all volumes on disk6 was successful
+Reading disk...
+  100.0%  4.0 TB / 4.0 TB
+Read complete.
+Remounting disk6...
+Volume(s) on disk6 failed to mount or are not currently mountable.
 ```
 
 If no external drives are detected, the program prints "No external physical drives found." and exits.
@@ -41,9 +50,18 @@ Input validation:
 - Selection: non-integers and out-of-range values prompt a retry; 0 quits
 - Confirmation: only yes/y/no/n accepted; anything else prompts a retry; no/n quits
 
-The disk read itself is not yet implemented; the "Preparing to fully read..." message is a placeholder.
-
 `Not Supported` for SMART status is typical for disks connected via USB adapters that don't pass SMART commands through.
+
+### Privilege escalation
+
+Reading raw disk devices requires root. If not running as root, the program re-executes itself via `sudo` using `syscall.Exec`, replacing the current process. The user sees a standard password prompt without needing to know about `sudo`.
+
+### Disk read implementation
+
+- Uses `diskutil unmountDisk /dev/diskN` before reading to prevent concurrent filesystem access
+- Reads from `/dev/rdiskN` (raw character device — faster than block device for sequential reads)
+- 1 MB read buffer; live progress display (`\r` overwrite) showing percentage and bytes read
+- Uses `sync.Once` to guarantee remount (`diskutil mountDisk /dev/diskN`) happens exactly once, whether the read completes normally, fails with an error, or is interrupted by SIGINT/SIGTERM
 
 ## Technical Approach
 
@@ -120,7 +138,11 @@ stressssd/
 - **No `/dev/` prefix in output**: Identifiers are printed as `diskN` (matching `diskutil`'s own convention). The `/dev/` prefix is used internally when calling `diskutil info`.
 - **stderr for errors, stdout for results**: Clean separation so output can be piped or processed by other tools. Per-disk info errors are non-fatal; processing continues to the next disk.
 - **Decimal sizes**: `diskutil` reports sizes in decimal (1 GB = 1,000,000,000 bytes), so the formatter uses the same convention.
+- **`/dev/rdiskN` over `/dev/diskN`**: Raw character device bypasses the buffer cache, giving much faster sequential reads.
+- **Inline read loop over `dd`/`cat`**: Allows live progress display without external dependencies.
+- **`sync.Once` for remount**: Ensures remount runs exactly once regardless of exit path (normal, error, or signal).
+- **`syscall.Exec` for sudo re-exec**: Replaces the current process entirely rather than spawning a child, so the elevated process owns the terminal cleanly.
 
 ## Next Steps
 
-- Implement the full sequential read of the selected disk (the core SSD exercise feature)
+No further features currently planned.
