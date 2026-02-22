@@ -77,6 +77,7 @@ stressssd/
   go.mod        — module: stressssd, go 1.23
   go.sum        — dependency checksums
   CLAUDE.md     — guidance for Claude Code
+  README.md     — project overview and build instructions
   vault/
     CONTEXT.md  — this file
 ```
