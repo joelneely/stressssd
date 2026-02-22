@@ -25,7 +25,7 @@ Single-file Go program (`main.go`). Flow:
 4. Print columnar list with index, disk name, size, SMART status
 5. Prompt user to select a disk by line number (0 to quit; validates range)
 6. Warn about open files; prompt for confirmation (yes/y/no/n)
-7. Unmount disk (`diskutil unmountDisk`), read raw device (`/dev/rdiskN`) sequentially with live progress, remount (`diskutil mountDisk`)
+7. Unmount disk (`diskutil unmountDisk`), read raw device (`/dev/rdiskN`) sequentially with live progress and elapsed time on completion, remount (`diskutil mountDisk`), print total run time
 
 The `vault/` directory is an Obsidian notes vault and is not part of the Go program. JSON files inside it are gitignored.
 
@@ -39,6 +39,7 @@ The `vault/` directory is an Obsidian notes vault and is not part of the Go prog
 - **`syscall.Exec` for sudo**: Replaces the current process rather than spawning a child, so the elevated process owns the terminal cleanly.
 - **stderr/stdout separation**: Errors go to stderr; results go to stdout so output can be piped cleanly.
 - **Decimal sizes**: Matches `diskutil` convention (1 GB = 1,000,000,000 bytes).
+- **Timing**: `programStart` captured at top of `main()`; `readStart` captured before the read loop. `formatDuration` formats as `Xh Ym Zs`, `Ym Zs`, or `Zs`. Read time shown on "Read complete."; total run time shown after successful remount.
 
 ## macOS Dependency
 
