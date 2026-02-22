@@ -6,11 +6,12 @@ A macOS command-line utility to help keep external SSDs healthy and prevent data
 
 ## Current behavior
 
-When run, `stressssd` lists all external physical disks currently connected to the Mac, one per line, with their total capacity and SMART status:
+When run, `stressssd` lists all external physical disks currently connected to the Mac, with their total capacity and SMART status:
 
 ```
-disk4     2.0 GB      Not Supported
-disk6     4.0 TB      Verified
+ #  Disk      Size        SMART Status
+ 1  disk4     2.0 GB      Not Supported
+ 2  disk6     4.0 TB      Verified
 ```
 
 `Not Supported` for SMART status is common with disks connected via USB adapters that don't pass SMART commands through to the drive.
